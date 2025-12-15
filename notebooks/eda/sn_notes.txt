@@ -1,0 +1,9 @@
+Went through the dataset.
+
+A pure power law environment if I ever saw one... 
+
+--------- files
+df1 -> the 2018 file
+df1_test = df1.query("backers < 80.000")
+df1_testsuccess = df1.query('state == "successful"')
+
