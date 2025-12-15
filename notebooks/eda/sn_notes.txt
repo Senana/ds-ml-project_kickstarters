@@ -1,9 +1,53 @@
-Went through the dataset.
 
-A pure power law environment if I ever saw one... 
+============== Plan 
+We are going to predict Kickstarter Projects failing or being successful
+- since most projects failed, unbalanced dataset - remember that in the measures to. choose 
 
---------- files
-df1 -> the 2018 file
-df1_test = df1.query("backers < 80.000")
-df1_testsuccess = df1.query('state == "successful"')
+- if the question is "what are the chances of my kickstarter project to be successful" 
+I don't know the backers at the outset 
+
+--- but we have time - so we can work with "lifetime values" 
+--- but we don't know how many backers the projects HAD at what point, unfortunately
+--- so "accelleration" is not in the data 
+
+> Backers correlate heavily with success 
+--- which categories attract how many backers? 
+--- money-per-backer is something we could work with, but it's going to be wrong because all we can do is the average ... unfortunately
+
+
+> Backers and countries could also be correlated
+> Categories and backers could correlate? 
+
+then: money with money. How much "more" did you make than your goal? (how much less?)
+
+
+==== ToDo 
+
+Let's drop: Name, Category, Goal, pledged, Currency, USD pledged (remains: goal_real, main_category, usd_pledged_real)
+--- paranoia check: you could quickly go into success measures by category if wanted 
+
+Let's keep "failed" and "successful" 
+- we can try with "cancelled" and without (if we have resources)
+- the "other" states let's just drop 
+
+Let's transform: Dates into Datetime (granularity to get amount of days)
+* calculate a new column "duration" by deadline - launched 
+
+We need outlier cleaning 
+- check for unrealistic durations and cut somewhere 
+- money: let's make a decision about money in the "failed" category (unrealistically high umber)
+- question: we want the big numbers in there, they are "real" outliers mostly 
+- we can circumvent some problemy by binning (same for pledged and goal)
+--- let's try 6 bins 
+(Optional): we could check in with the old dataframe and see if the same outliers appear
+
+Backers: 
+- let's go for "backer by country"
+- "backer by category"
+- ratio backers / money pledged 
+
+When we're done, we will need to scale (or dummy) - let's make several versions of the data 
+
+Countries: 
+- Let's go for continents then (Leya's version)
 
