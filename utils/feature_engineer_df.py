@@ -97,6 +97,10 @@ def build_features(
     df["usd_goal_bins"] = pd.qcut(df["usd_goal_real"], q=5, labels=labels)
     df["usd_pledged_bins"] = pd.qcut(df["usd_pledged_real"], q=5, labels=labels)
 
+    # --- category averages ---
+    df['pledged_per_category'] = df.groupby('main_category')['usd_pledged_real'].transform('mean')
+    df['goal_per_category'] = df.groupby('main_category')['usd_goal_real'].transform('mean')
+
     # --- category percentiles ---
     df["category_goal_percentile"] = (
         df.groupby("main_category_grouped")["usd_goal_real"]
@@ -121,6 +125,7 @@ def build_features(
     df['deadline_season'] = df['deadline_month'].apply(convert_season)
 
     # --- save ---
+    logger.info(f"Final columns before save: {df.columns.tolist()}")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_path, index=False)
 
