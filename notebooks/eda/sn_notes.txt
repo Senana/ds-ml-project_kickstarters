@@ -51,3 +51,87 @@ When we're done, we will need to scale (or dummy) - let's make several versions 
 Countries: 
 - Let's go for continents then (Leya's version)
 
+
+================ ToDo for the feature engineering
+I want to check certain rates for both winners and losers 
+to look for useful metrics that are informative to the algorithm:
+
+Further cleaning 
+
+BACKERS
+* we can't really use backers 
+--- they won't be there at the moment we are looking at a new campaign! 
+--- in a real business environment you wouldn't use those to predict in real
+* worth trying, a running ratio would be available in real time 
+TODO: calculate a sensible ratio and check if it works out 
+* we could use backers as a baseline? 
+
+CATEGORIES 
+
+
+TIME 
+* we only have very little temporal info:
+* Best Season / best Month to start a campaign 
+TODO: make "month of launch" category 
+TODO: make a "month of deadline" category 
+TODO: make "duration" categories 
+
+
+--- maybe: explode polynomial features: 
+* month and goal? 
+* Category and goal? 
+
+CATEGORY
+==> RL reason: 100k in tech is not the same as 100k in poetry 
+TODO: make a good combination measure "goal per category"
+--- for that: also try for four bins of "goal size" (after throwing out "small fish" and "unicorns")
+
+==> Category per continent makes sense. 
+Hypothesis: Certain topics ("tech in US") are more successful coming from certain countries or continents
+TODO: make a "category per continent" polynomial 
+
+==> launched and deadline are available 
+- sames for money, it's probably realistic per category (idea)
+TODO: Once we have duration bins, make category-bin duration-bin polynomial 
+
+TEXT 
+* sentiment / keyword analysis for the title 
+==> biggest RL argument to go for this one! BUT we lack the 
+--- postponed. (sentiment analysis...)
+--- we COULD do a "buzzword analysis" per category using wordcloud algorithms 
+TODO: include on slide and if we have looooooots of time get to it 
+
+* backers over time (duration)
+* backers ratio to both goal and pledged 
+* size bin distribution 
+--- if we do quantiles it'll distribute the values, but it'll show differently with winners or losers. 
+--- so do we do quantiles overall? - that's the question isn't it. 
+* That is - sensible units for the goal and pledged distributions (winners, losers, overall?)
+
+Money measures: 
+* ratio pledged / goal could be interesting 
+
+Potential measures: 
+* distance from median per project? 
+---- hypothesis: above-median proportionally increases success (for backers, pledged)
+
+Question: 
+* What do we do with backers vs. pledged: leave one out, take a composite measure, keep both but bin? 
+
+
+-----------------Outlier cleaning
+* I would opt for taking out the "big hitters" and noting that we did so (see distribution curves)
+
+Question: 
+* We could do something like cutting the "didn't get off the ground" (lower end) which would actually balance our dataset more 
+
+
+-----------------Feature engineering
+
+Categoricals: 
+* There's different effects on different algorithms for different choices 
+--- get dummies
+--- keep scales which are within the same range 
+--- keep numeric but scale 
+
+
