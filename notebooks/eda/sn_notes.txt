@@ -1,0 +1,137 @@
+
+============== Plan 
+We are going to predict Kickstarter Projects failing or being successful
+- since most projects failed, unbalanced dataset - remember that in the measures to. choose 
+
+- if the question is "what are the chances of my kickstarter project to be successful" 
+I don't know the backers at the outset 
+
+--- but we have time - so we can work with "lifetime values" 
+--- but we don't know how many backers the projects HAD at what point, unfortunately
+--- so "accelleration" is not in the data 
+
+> Backers correlate heavily with success 
+--- which categories attract how many backers? 
+--- money-per-backer is something we could work with, but it's going to be wrong because all we can do is the average ... unfortunately
+
+
+> Backers and countries could also be correlated
+> Categories and backers could correlate? 
+
+then: money with money. How much "more" did you make than your goal? (how much less?)
+
+
+==== ToDo 
+
+Let's drop: Name, Category, Goal, pledged, Currency, USD pledged (remains: goal_real, main_category, usd_pledged_real)
+--- paranoia check: you could quickly go into success measures by category if wanted 
+
+Let's keep "failed" and "successful" 
+- we can try with "cancelled" and without (if we have resources)
+- the "other" states let's just drop 
+
+Let's transform: Dates into Datetime (granularity to get amount of days)
+* calculate a new column "duration" by deadline - launched 
+
+We need outlier cleaning 
+- check for unrealistic durations and cut somewhere 
+- money: let's make a decision about money in the "failed" category (unrealistically high umber)
+- question: we want the big numbers in there, they are "real" outliers mostly 
+- we can circumvent some problemy by binning (same for pledged and goal)
+--- let's try 6 bins 
+(Optional): we could check in with the old dataframe and see if the same outliers appear
+
+Backers: 
+- let's go for "backer by country"
+- "backer by category"
+- ratio backers / money pledged 
+
+When we're done, we will need to scale (or dummy) - let's make several versions of the data 
+
+Countries: 
+- Let's go for continents then (Leya's version)
+
+
+================ ToDo for the feature engineering
+I want to check certain rates for both winners and losers 
+to look for useful metrics that are informative to the algorithm:
+
+Further cleaning 
+
+BACKERS
+* we can't really use backers 
+--- they won't be there at the moment we are looking at a new campaign! 
+--- in a real business environment you wouldn't use those to predict in real
+* worth trying, a running ratio would be available in real time 
+TODO: calculate a sensible ratio and check if it works out 
+* we could use backers as a baseline? 
+
+CATEGORIES 
+
+
+TIME 
+* we only have very little temporal info:
+* Best Season / best Month to start a campaign 
+TODO: make "month of launch" category 
+TODO: make a "month of deadline" category 
+TODO: make "duration" categories 
+
+
+--- maybe: explode polynomial features: 
+* month and goal? 
+* Category and goal? 
+
+CATEGORY
+==> RL reason: 100k in tech is not the same as 100k in poetry 
+TODO: make a good combination measure "goal per category"
+--- for that: also try for four bins of "goal size" (after throwing out "small fish" and "unicorns")
+
+==> Category per continent makes sense. 
+Hypothesis: Certain topics ("tech in US") are more successful coming from certain countries or continents
+TODO: make a "category per continent" polynomial 
+
+==> launched and deadline are available 
+- sames for money, it's probably realistic per category (idea)
+TODO: Once we have duration bins, make category-bin duration-bin polynomial 
+
+TEXT 
+* sentiment / keyword analysis for the title 
+==> biggest RL argument to go for this one! BUT we lack the 
+--- postponed. (sentiment analysis...)
+--- we COULD do a "buzzword analysis" per category using wordcloud algorithms 
+TODO: include on slide and if we have looooooots of time get to it 
+
+* backers over time (duration)
+* backers ratio to both goal and pledged 
+* size bin distribution 
+--- if we do quantiles it'll distribute the values, but it'll show differently with winners or losers. 
+--- so do we do quantiles overall? - that's the question isn't it. 
+* That is - sensible units for the goal and pledged distributions (winners, losers, overall?)
+
+Money measures: 
+* ratio pledged / goal could be interesting 
+
+Potential measures: 
+* distance from median per project? 
+---- hypothesis: above-median proportionally increases success (for backers, pledged)
+
+Question: 
+* What do we do with backers vs. pledged: leave one out, take a composite measure, keep both but bin? 
+
+
+-----------------Outlier cleaning
+* I would opt for taking out the "big hitters" and noting that we did so (see distribution curves)
+
+Question: 
+* We could do something like cutting the "didn't get off the ground" (lower end) which would actually balance our dataset more 
+
+
+-----------------Feature engineering
+
+Categoricals: 
+* There's different effects on different algorithms for different choices 
+--- get dummies
+--- keep scales which are within the same range 
+--- keep numeric but scale 
+
+
