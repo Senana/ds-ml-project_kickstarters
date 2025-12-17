@@ -19,3 +19,12 @@ setup:
 	.venv/bin/python -m pip install -r requirements.txt 
 	@echo "=========|| The requirements have been installed successfully ||========="
 
+.PHONY: setup-notebooks
+setup-notebooks:
+	@echo "=========|| Setting up notebook tools and git hooks ||========="
+	python -m pip install --upgrade nbdime nbstripout pre-commit
+	nbdime config-git --enable
+	nbstripout --install
+	pre-commit install
+	@echo "=========|| Done. Notebook diffs/merges enabled, outputs stripped, pre-commit installed. ||========="
+
