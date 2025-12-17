@@ -111,7 +111,7 @@ def build_features(
     df["duration_bins"] = pd.cut(
         df["duration_days"],
         bins=[0, 15, 29, 45, 60, 75, float("inf")],
-        labels=["<2 weeks", "2 weeks", "4 weeks", "6 weeks", "8+ weeks"],
+        labels=["<2 weeks", "2 weeks", "4 weeks", "6 weeks", "8 weeks", "8+ weeks"],
         right=True,
         include_lowest=True
     )
