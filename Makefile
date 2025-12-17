@@ -19,3 +19,18 @@ setup:
 	.venv/bin/python -m pip install -r requirements.txt 
 	@echo "=========|| The requirements have been installed successfully ||========="
 
+.PHONY: setup-notebooks
+setup-notebooks:
+	@echo "=========|| Setting up notebook tools and git hooks ||========="
+	@echo "Installing nbdime, nbstripout, and pre-commit globally (user site-packages)..."
+	python -m pip install --user --upgrade nbdime nbstripout pre-commit
+	@echo "Configuring git for notebook diffs..."
+	python -m nbdime config-git --enable
+	@echo "Installing nbstripout git filter..."
+	python -m nbstripout --install
+	@echo "Installing pre-commit hooks..."
+	@python -m pre_commit.main install || pre-commit install
+	@echo "=========|| Done. Notebook diffs/merges enabled, outputs stripped, pre-commit installed. ||========="
+	@echo "Note: On Windows, ensure Python Scripts directory is in your PATH"
+	@echo "      (e.g., %%APPDATA%%\\Python\\PythonXX\\Scripts or %%LOCALAPPDATA%%\\Programs\\Python\\PythonXX\\Scripts)"
+
