@@ -22,6 +22,71 @@ def convert_season(month: Optional[int]) -> Optional[str]:
         return None
 
 
+def engineer_launch_time_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Apply launch-time feature engineering to a DataFrame.
+    
+    This function creates features that are available at launch time and don't depend
+    on future information or aggregates. Safe to use before time-based train/test splits.
+    
+    Args:
+        df: DataFrame with columns: main_category, country, launched, deadline, 
+            usd_goal_real, duration_days
+        
+    Returns:
+        DataFrame with additional features added
+    """
+    df = df.copy()
+    
+    # --- categories ---
+    category_map = {
+        'Art': 'Creative', 'Comics': 'Creative', 'Crafts': 'Creative',
+        'Dance': 'Creative', 'Design': 'Creative',
+        'Fashion': 'Consumer', 'Food': 'Consumer',
+        'Film & Video': 'Entertainment', 'Games': 'Entertainment',
+        'Music': 'Entertainment', 'Theater': 'Entertainment',
+        'Photography': 'Creative', 'Publishing': 'Creative',
+        'Technology': 'Tech', 'Journalism': 'Other'
+    }
+    df["main_category_grouped"] = (
+        df["main_category"].map(category_map).fillna("Other")
+    )
+
+    # --- continents ---
+    continent_map = {
+        'US': 'North America', 'CA': 'North America', 'MX': 'North America',
+        'GB': 'Europe', 'DE': 'Europe', 'FR': 'Europe', 'IT': 'Europe',
+        'ES': 'Europe', 'NL': 'Europe', 'IE': 'Europe', 'SE': 'Europe',
+        'CH': 'Europe', 'AT': 'Europe', 'DK': 'Europe', 'BE': 'Europe',
+        'LU': 'Europe', 'NO': 'Europe',
+        'AU': 'Oceania', 'NZ': 'Oceania',
+        'JP': 'Asia', 'SG': 'Asia', 'HK': 'Asia'
+    }
+    df["continent"] = df["country"].map(continent_map).fillna("Other")
+
+    # --- time features ---
+    # Ensure datetime columns are datetime type
+    if not pd.api.types.is_datetime64_any_dtype(df["launched"]):
+        df["launched"] = pd.to_datetime(df["launched"], errors="coerce")
+    if not pd.api.types.is_datetime64_any_dtype(df["deadline"]):
+        df["deadline"] = pd.to_datetime(df["deadline"], errors="coerce")
+
+    for col in ["launched", "deadline"]:
+        df[f"{col}_year"] = df[col].dt.year
+        df[f"{col}_month"] = df[col].dt.month
+
+    # --- weekday feature ---
+    df["launched_weekday"] = df["launched"].dt.weekday
+
+    # --- log transform and goal intensity features ---
+    # Log transform goal (usd_goal_real spans 8 orders of magnitude)
+    df["log_usd_goal"] = np.log1p(df["usd_goal_real"])
+    # Goal per day: intensity feature (goal per day of campaign duration)
+    df["goal_per_day"] = df["log_usd_goal"] / (df["duration_days"] + 1)
+    
+    return df
+
+
 def identify_trending_categories(
     df: pd.DataFrame,
     lookback_weeks: int = 4,
@@ -146,40 +211,8 @@ def build_features(
         (df["usd_pledged_real"] > 0)
     ].copy()
 
-    # --- categories ---
-    category_map = {
-        'Art': 'Creative', 'Comics': 'Creative', 'Crafts': 'Creative',
-        'Dance': 'Creative', 'Design': 'Creative',
-        'Fashion': 'Consumer', 'Food': 'Consumer',
-        'Film & Video': 'Entertainment', 'Games': 'Entertainment',
-        'Music': 'Entertainment', 'Theater': 'Entertainment',
-        'Photography': 'Creative', 'Publishing': 'Creative',
-        'Technology': 'Tech', 'Journalism': 'Other'
-    }
-    df["main_category_grouped"] = (
-        df["main_category"].map(category_map).fillna("Other")
-    )
-
-    # --- continents ---
-    continent_map = {
-        'US': 'North America', 'CA': 'North America', 'MX': 'North America',
-        'GB': 'Europe', 'DE': 'Europe', 'FR': 'Europe', 'IT': 'Europe',
-        'ES': 'Europe', 'NL': 'Europe', 'IE': 'Europe', 'SE': 'Europe',
-        'CH': 'Europe', 'AT': 'Europe', 'DK': 'Europe', 'BE': 'Europe',
-        'LU': 'Europe', 'NO': 'Europe',
-        'AU': 'Oceania', 'NZ': 'Oceania',
-        'JP': 'Asia', 'SG': 'Asia', 'HK': 'Asia'
-    }
-
-    df["continent"] = df["country"].map(continent_map).fillna("Other")
-
-    # --- time ---
-    df["launched"] = pd.to_datetime(df["launched"], errors="coerce")
-    df["deadline"] = pd.to_datetime(df["deadline"], errors="coerce")
-
-    for col in ["launched", "deadline"]:
-        df[f"{col}_year"] = df[col].dt.year
-        df[f"{col}_month"] = df[col].dt.month
+    # --- launch-time features (safe before time splits) ---
+    df = engineer_launch_time_features(df)
 
     # --- financial bins ---
     labels = ["Very Low", "Low", "Medium", "High", "Very High"]
