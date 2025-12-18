@@ -22,6 +22,95 @@ def convert_season(month: Optional[int]) -> Optional[str]:
         return None
 
 
+def identify_trending_categories(
+    df: pd.DataFrame,
+    lookback_weeks: int = 4,
+    success_rate_threshold: Optional[float] = None
+) -> pd.Series:
+    """
+    Identify trending categories by week using historical data.
+    
+    A category is considered "trending" if it has a high success rate in recent weeks.
+    This is simpler than momentum-based approaches and captures categories that are
+    performing well recently.
+    """
+    # Check required columns
+    required_cols = ['launched', 'main_category', 'target']
+    missing_cols = [col for col in required_cols if col not in df.columns]
+    if missing_cols:
+        raise ValueError(f"Missing required columns: {missing_cols}")
+    
+    # Ensure launched is datetime
+    df = df.copy()
+    df['launched'] = pd.to_datetime(df['launched'], errors='coerce')
+    
+    # Create week identifier (year-week)
+    df['launch_year_week'] = df['launched'].dt.to_period('W')
+    
+    # Sort by launch date for time-safe processing
+    df_sorted = df.sort_values('launched').copy()
+    
+    # Initialize result series
+    is_trending = pd.Series(False, index=df_sorted.index)
+    
+    # Get unique weeks
+    unique_weeks = sorted(df_sorted['launch_year_week'].dropna().unique())
+    
+    # Process each week
+    for i, current_week in enumerate(unique_weeks):
+        # Get projects launched in this week
+        current_week_mask = df_sorted['launch_year_week'] == current_week
+        
+        if current_week_mask.sum() == 0:
+            continue
+        
+        # Get historical data: projects launched in the past N weeks (excluding current week)
+        # Convert period to datetime for comparison
+        current_week_start = current_week.to_timestamp()
+        lookback_start = current_week_start - pd.Timedelta(weeks=lookback_weeks)
+        
+        historical_mask = (
+            (df_sorted['launched'] >= lookback_start) &
+            (df_sorted['launched'] < current_week_start)
+        )
+        
+        if historical_mask.sum() == 0:
+            # No historical data, skip this week
+            continue
+        
+        historical_df = df_sorted[historical_mask]
+        
+        # Calculate category success rates from historical data
+        category_stats = historical_df.groupby('main_category').agg({
+            'target': ['count', 'mean']  # count = volume, mean = success rate
+        }).reset_index()
+        category_stats.columns = ['main_category', 'volume', 'success_rate']
+        
+        # Filter categories with minimum volume (at least 5 projects)
+        category_stats = category_stats[category_stats['volume'] >= 5]
+        
+        if category_stats.empty:
+            continue
+        
+        # Determine threshold: use 75th percentile if not specified
+        if success_rate_threshold is None:
+            threshold = category_stats['success_rate'].quantile(0.75)
+        else:
+            threshold = success_rate_threshold
+        
+        # Categories with high success rate are trending
+        trending_categories = set(
+            category_stats[category_stats['success_rate'] >= threshold]['main_category'].tolist()
+        )
+        
+        # Mark projects in current week if their category is trending
+        current_week_categories = df_sorted.loc[current_week_mask, 'main_category']
+        is_trending.loc[current_week_mask] = current_week_categories.isin(trending_categories)
+    
+    # Return series aligned with original dataframe index
+    return is_trending.reindex(df.index, fill_value=False)
+
+
 def build_features(
     input_path: Path,
     output_path: Path,
@@ -125,6 +214,17 @@ def build_features(
     # --- seasons ---
     df['launch_season'] = df['launched_month'].apply(convert_season)
     df['deadline_season'] = df['deadline_month'].apply(convert_season)
+
+    # --- trending categories ---
+    # Identify categories with high recent success rates
+    # Simple approach: categories in top 25% of success rates in recent weeks
+    logger.info("Computing trending category feature...")
+    df['is_trending_category'] = identify_trending_categories(
+        df=df,
+        lookback_weeks=4,  # Look back 4 weeks
+        success_rate_threshold=None  # Use 75th percentile of category success rates
+    )
+    logger.info(f"Trending category feature computed: {df['is_trending_category'].sum():,} projects ({df['is_trending_category'].mean():.2%}) belong to trending categories")
 
     # --- save ---
     logger.info(f"Final columns before save: {df.columns.tolist()}")
