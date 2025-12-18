@@ -34,3 +34,14 @@ setup-notebooks:
 	@echo "Note: On Windows, ensure Python Scripts directory is in your PATH"
 	@echo "      (e.g., %%APPDATA%%\\Python\\PythonXX\\Scripts or %%LOCALAPPDATA%%\\Programs\\Python\\PythonXX\\Scripts)"
 
+.PHONY: clean-notebooks
+clean-notebooks:
+	@echo "=========|| Stripping metadata from all notebooks ||========="
+	@if command -v nbstripout >/dev/null 2>&1 || python -m nbstripout --help >/dev/null 2>&1; then \
+		find notebooks -name "*.ipynb" -type f -exec python -m nbstripout {} \; && \
+		echo "=========|| Successfully cleaned all notebooks ||========="; \
+	else \
+		echo "Error: nbstripout not found. Run 'make setup-notebooks' first."; \
+		exit 1; \
+	fi
+
