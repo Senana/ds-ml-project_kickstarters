@@ -1,0 +1,51 @@
+Final discussion 
+
+How can we prevent leakage? 
+* not use "future" data
+
+Final decisions 
+* not cut out projects for being "failures" (future information)
+* not use "pledged" in any way, or "backers", as that is still future information 
+* Consider "deadline" to be available at the start 
+
+Which scores? 
+* slightly unbalanced dataset so we're free to choose except Accuracy
+* Can do different scores if possible but need to pick a main one for certain optimizations
+* F1 works for being "right but not wrong too" and we do care about the positives 
+* --- given a random new kickstarter project, how likely is it to succeed?
+* --- ROC_AUC -> TODO lookup 
+
+Which scaling? 
+* 
+
+Experiences: 
+* KNN performs badly (less than baseline) in current configuration 
+* Regression 
+* Single decision tree performs rather poorly generally speaking
+* Random Forest works pretty well 
+We are at around 0.6 
+
+Scaling vs. Binning 
+* ... belonging to a category which "recently" had the biggest success rate 
+* ... "top countries" by funding "recently" in "category" 
+
+
+===== Next Steps 
+* try weighted average with the best algorithm configurations 
+* Go into feature engineering one more time
+
+TODO: Try the "Trendiness measures": "Success rate by category" - last n weeks - & success rate by actual country (not cotinent) last n weeks
+TODO: check final features: what to bin and what to scale (or not at all)
+
+TODO: look up if Ensemble needs one set or if we can use different preprocessing per algorithm 
+
+* Goal 
+* Duration 
+* Goal per Category 
+-- scale or log transform 
+
+
+= Notes for later = 
+* Feature importance 
+* Include dead ends and tryouts (like we also have an XGBoost)
+* "works best on scaled or unscaled" - discussion 
